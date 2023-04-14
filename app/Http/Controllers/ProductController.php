@@ -8,19 +8,18 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('admin');
-    }
-
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::orderBy('created_at')->paginate(10);
+        if (isset($request->search) && !empty($request->search)) {
+            $products = Product::where('name', 'like', '%'.$request->search.'%')->orWhere('description', 'like', '%'.$request->search.'%')->paginate(10);
+        } else {
+            $products = Product::paginate(10);
+        }
 
         return response()->json([
             'status' => true,
@@ -46,20 +45,6 @@ class ProductController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param  Product $product
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Product $product)
-    {
-        return response()->json([
-            'status' => true,
-            'product' => $product
-        ], 200);
-    }
-
-    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -68,7 +53,15 @@ class ProductController extends Controller
      */
     public function update(ProductRequest $request, Product $product)
     {
-        $product->update($request->validated());
+        $data = $request->validated();
+        $product->increment('quantity', $data['quantity']);
+
+        $product->update([
+            'name' => $data['name'],
+            'description' => $data['description'],
+            'price' => $data['price'],
+            'quantity' => $product->quantity
+        ]);
 
         return response()->json([
             'status' => true,

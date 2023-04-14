@@ -11,7 +11,18 @@ class Product extends Model
 
     protected $fillable = [
         'name',
+        'description',
         'price',
         'quantity'
     ];
+
+    public function cart()
+    {
+        return $this->hasOne(Cart::class);
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
 }
